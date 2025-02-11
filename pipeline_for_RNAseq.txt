@@ -1,0 +1,28 @@
+%step 1)fastqc quality control 
+fastqc SRR12764809.fastq -o qc_reports/
+
+%%step 2 )adapter Trimmomatic
+java -jar /home/rhogenbiotech5/Trimmomatic-0.39/trimmomatic-0.39.jar SE -phred33 \
+/home/rhogenbiotech5/SRR12764809.fastq \
+/home/rhogenbiotech5/output_single_trimmed.fastq \
+ILLUMINACLIP:/home/rhogenbiotech5/Trimmomatic-0.39/adapters/TruSeq2-SE.fa:2:30:10 \
+-threads 4
+
+%% step 3) bowtie downloaded the index file from GitHub 
+bowtie2 -x /home/rhogenbiotech5/GRCh38_noalt_as/GRCh38_noalt_as \
+-U /home/rhogenbiotech5/SRR12764809.fastq \
+-S /home/rhogenbiotech5/output_aligned.sam \
+--threads 4
+
+%% step4) Guide to Align to a Reference Genome Using STAR
+STAR --runThreadN 4 \
+--runMode genomeGenerate \
+--genomeDir /home/rhogenbiotech5/GRCh38_index \
+--genomeFastaFiles /home/rhogenbiotech5/genome/GRCh38.primary_assembly.genome.fa \
+--sjdbGTFfile /home/rhogenbiotech5/genome/gencode.v29.annotation.gtf \
+--sjdbOverhang 100
+
+%%step 5) Transcript Assembly (StringTie)
+stringtie /home/rhogenbiotech5/output_aligned_sorted.bam -G /home/rhogenbiotech5/genome/gencode.v29.annotation.gtf -o /home/rhogenbiotech5/output/transcripts.gtf
+
+
